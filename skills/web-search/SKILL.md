@@ -1,251 +1,155 @@
 ---
 name: web-search
-description: |
-  Comprehensive web searching and information gathering skill. Use when Claude needs to search the web,
-  gather current information, find sources, or verify facts. This skill provides structured approaches
-  for effective web research, source evaluation, and information synthesis. Trigger when users ask for
-  current information, need to verify facts, require up-to-date data, or want to gather multiple sources
-  on a topic.
+description: "Perform web searches using DuckDuckGo to find information, answer questions, and gather data from the internet. Use when Claude needs to: (1) Search for current information or facts, (2) Find documentation or tutorials, (3) Research topics or gather data, (4) Look up news or recent developments, (5) Find websites or resources on specific subjects. This skill provides privacy-focused web searching without tracking."
 ---
-
 # Web Search Skill
 
 ## Overview
 
-This skill provides comprehensive guidance for conducting effective web searches and gathering reliable information. It covers search strategies, source evaluation, information synthesis, and best practices for web research.
+This skill enables Claude to perform web searches using DuckDuckGo, a privacy-focused search engine. It provides both API-based search and HTML fallback methods to retrieve web results including titles, URLs, and snippets.
 
-## Core Principles
+## Quick Start
 
-### 1. Search Strategy First
-Always start with a clear search strategy before executing queries. Consider:
-- What specific information is needed?
-- What keywords will yield the best results?
-- Which sources are most likely to have reliable information?
-- What time frame is relevant (current vs historical)?
+To perform a basic web search:
 
-### 2. Source Evaluation
-Not all sources are created equal. Evaluate sources based on:
-- **Authority**: Who created the content? What are their credentials?
-- **Accuracy**: Is the information supported by evidence?
-- **Currency**: When was the information published/updated?
-- **Purpose**: Why was the information created (inform, persuade, sell)?
-- **Bias**: What perspectives might be missing or overrepresented?
+```bash
+# Using the simple search script (recommended)
+python scripts/simple_search.py "your search query" --max-results 3
 
-### 3. Information Synthesis
-Combine information from multiple sources to build a comprehensive understanding:
-- Look for consensus among reliable sources
-- Note conflicting information and investigate why
-- Consider different perspectives and contexts
-- Distinguish between facts, opinions, and interpretations
+# Using the advanced search script (requires BeautifulSoup)
+python scripts/duckduckgo_search.py "your search query" --max-results 5
+```
 
-## Search Techniques
+## Search Methods
 
-### Basic Search Operators
+### 1. Simple Search (Recommended)
+The `simple_search.py` script uses DuckDuckGo's Instant Answer API and includes a fallback HTML parser. It doesn't require additional dependencies beyond `requests`.
 
-**Google/DuckDuckGo Operators:**
-- `"exact phrase"` - Search for exact phrase
-- `site:example.com` - Search within specific site
-- `filetype:pdf` - Search for specific file types
-- `-excludeword` - Exclude terms from results
-- `intitle:keyword` - Search in page titles
-- `inurl:keyword` - Search in URLs
-- `related:example.com` - Find related sites
-- `before:2023` / `after:2022` - Date range searches
+**Features:**
+- Instant answers for factual queries
+- Related topics and web results
+- Automatic fallback to HTML search
+- Consistent JSON output format
 
-**Advanced Techniques:**
-- **Boolean operators**: `AND`, `OR`, `NOT` (or `+`, `|`, `-`)
-- **Wildcards**: `*` for unknown words (e.g., "best * for beginners")
-- **Range searches**: `2020..2023` for number ranges
-- **Cache view**: `cache:example.com` to see cached version
+### 2. Advanced Search
+The `duckduckgo_search.py` script uses BeautifulSoup for more robust HTML parsing. It requires `beautifulsoup4` and `requests`.
 
-### Search Strategy Patterns
+**Features:**
+- More comprehensive web search results
+- Better snippet extraction
+- Region and safe search controls
+- Detailed result parsing
 
-**1. Broad to Narrow:**
-- Start with general terms to understand the landscape
-- Gradually add specific terms to narrow results
-- Example: "artificial intelligence" → "AI in healthcare" → "AI diagnostic tools 2024"
+## How to Use This Skill
 
-**2. Question-Based Searching:**
-- Frame searches as questions for more targeted results
-- Example: "How does blockchain work?" vs "blockchain technology"
+### Basic Search Workflow
 
-**3. Source-Specific Searching:**
-- Identify likely sources first, then search within them
-- Example: For academic research, search `site:arxiv.org` or `site:scholar.google.com`
+1. **Identify the search need**: Determine what information you need to find
+2. **Formulate the query**: Create specific, clear search terms
+3. **Execute the search**: Run the appropriate search script
+4. **Analyze results**: Review titles, URLs, and snippets
+5. **Extract information**: Gather relevant data from results
+6. **Follow up if needed**: Perform additional searches for more information
 
-**4. Time-Constrained Searching:**
-- Use date operators for current information
-- Example: "COVID variants after:2023-12-01"
+### Common Search Patterns
 
-## Source Types and Reliability
+#### Factual Information
+```bash
+python scripts/simple_search.py "population of Tokyo" --max-results 2
+```
 
-### High Reliability Sources
-- **Academic**: Peer-reviewed journals, university publications
-- **Government**: .gov domains, official statistics, reports
-- **Established News**: Major newspapers with editorial standards
-- **Professional Organizations**: Industry associations, professional bodies
-- **Primary Sources**: Original research, official documents, direct observations
+#### Technical Documentation
+```bash
+python scripts/simple_search.py "Python requests library POST example" --max-results 3
+```
 
-### Medium Reliability Sources
-- **Reputable Blogs**: Industry experts with transparent credentials
-- **Company Websites**: Official information from established companies
-- **Industry Publications**: Trade magazines, industry reports
-- **Educational Platforms**: Khan Academy, Coursera, edX
+#### News and Current Events
+```bash
+python scripts/simple_search.py "latest AI developments 2024" --max-results 4
+```
 
-### Low Reliability Sources
-- **Personal Blogs/Social Media**: Unless from verified experts
-- **Unverified Forums**: Reddit, Quora (check for expert verification)
-- **Clickbait Sites**: Sensational headlines, excessive ads
-- **Uncited Claims**: Information without supporting evidence
+#### How-to Guides
+```bash
+python scripts/simple_search.py "how to set up Python virtual environment" --max-results 3
+```
 
-## Information Verification
+### Integration with Claude's Workflow
 
-### Fact-Checking Process
-1. **Cross-reference**: Check multiple reliable sources
-2. **Check dates**: Ensure information is current and relevant
-3. **Verify sources**: Trace claims back to original sources
-4. **Check for updates**: Look for corrections or recent developments
-5. **Consider context**: Understand the broader context of information
+When Claude needs to search the web:
 
-### Red Flags
-- Information only appears on one obscure site
-- No publication date or author information
-- Excessive emotional language or sensationalism
-- Claims that contradict established knowledge without evidence
-- Poor website design with excessive ads/popups
+1. **Direct execution**: Use the `bash` tool to run search scripts
+2. **Result processing**: Parse JSON output or text results
+3. **Information synthesis**: Combine multiple search results
+4. **Citation**: Include URLs when referencing information
 
-## Specialized Search Scenarios
+## Script Details
 
-### Academic Research
-- Use Google Scholar, PubMed, arXiv, JSTOR
-- Look for peer-reviewed articles
-- Check citation counts and impact factors
-- Review methodology sections carefully
+### simple_search.py
+- **Dependencies**: Only `requests` (already available)
+- **Output**: JSON or formatted text
+- **Best for**: Most search needs, quick results
 
-### Technical Information
-- Search documentation sites (`site:docs.example.com`)
-- Use GitHub for code examples and issues
-- Check Stack Overflow for specific problems
-- Review official documentation and API references
+### duckduckgo_search.py  
+- **Dependencies**: `beautifulsoup4` and `requests`
+- **Output**: JSON or formatted text
+- **Best for**: Comprehensive web searches, detailed results
 
-### Current Events
-- Use news aggregators with multiple sources
-- Check timestamp of information
-- Compare coverage across different outlets
-- Look for official statements or press releases
+## Result Format
 
-### Statistical Data
-- Government statistical agencies (.gov domains)
-- International organizations (UN, World Bank, IMF)
-- Academic research databases
-- Industry reports from reputable firms
+Search results are returned as a list of dictionaries:
 
-## Information Organization
+```python
+[
+    {
+        "title": "Result Title",
+        "url": "https://example.com/path",
+        "snippet": "Brief description or excerpt from the page",
+        "type": "instant_answer|related_topic|html_fallback"
+    }
+]
+```
 
-### Note-Taking Structure
-1. **Source Information**: URL, title, author, date, publication
-2. **Key Points**: Main findings or claims
-3. **Evidence**: Supporting data or quotes
-4. **Context**: How this fits with other information
-5. **Evaluation**: Reliability assessment and notes
+## Best Practices
 
-### Synthesis Techniques
-- Create comparison tables for different sources
-- Identify consensus points and areas of disagreement
-- Note gaps in information that need further research
-- Organize information thematically or chronologically
+1. **Be Specific**: Use precise search terms for better results
+2. **Use Appropriate max_results**: Start with 3-5 results, increase if needed
+3. **Verify URLs**: Check domain credibility before using information
+4. **Combine Sources**: Use multiple results to verify information
+5. **Respect Privacy**: DuckDuckGo doesn't track searches - maintain this privacy focus
 
-## Common Pitfalls to Avoid
+## Error Handling
 
-### 1. Confirmation Bias
-- Actively seek information that challenges your assumptions
-- Consider multiple perspectives on controversial topics
-- Be aware of your own biases when evaluating sources
+- Network errors return empty results
+- Invalid queries may return fewer results
+- API rate limits are handled gracefully
+- Timeouts are set to 10 seconds
 
-### 2. Recency Bias
-- Don't assume newer information is always better
-- Historical context is often important
-- Some foundational information doesn't change frequently
+## Examples of When to Use This Skill
 
-### 3. Authority Bias
-- Don't accept claims just because they come from "experts"
-- Verify credentials and check for conflicts of interest
-- Even reputable sources can make mistakes
+### Scenario 1: Answering Current Questions
+**User**: "What's the latest version of Python?"
+**Claude Action**: Search for "Python latest version release date"
 
-### 4. Information Overload
-- Set clear search boundaries and time limits
-- Focus on the most relevant and reliable sources first
-- Know when you have enough information to proceed
+### Scenario 2: Finding Documentation
+**User**: "How do I use the pandas groupby function?"
+**Claude Action**: Search for "pandas groupby function examples tutorial"
 
-## Quick Reference Checklist
+### Scenario 3: Research Topics
+**User**: "Tell me about renewable energy sources"
+**Claude Action**: Search for "types of renewable energy sources pros and cons"
 
-### Before Searching
-- [ ] Define clear search objectives
-- [ ] Identify key search terms and alternatives
-- [ ] Determine appropriate source types
-- [ ] Set time constraints if needed
+### Scenario 4: Technical Troubleshooting
+**User**: "I'm getting a 'module not found' error in Python"
+**Claude Action**: Search for the specific error message
 
-### During Searching
-- [ ] Use appropriate search operators
-- [ ] Evaluate source reliability quickly
-- [ ] Take organized notes
-- [ ] Adjust strategy based on initial results
+## Resources
 
-### After Searching
-- [ ] Cross-reference information
-- [ ] Verify key facts
-- [ ] Synthesize findings
-- [ ] Identify any remaining gaps
+For detailed usage examples and API documentation, see:
+- [Search Usage Guide](references/search_usage.md) - Comprehensive guide with examples
 
-## Output Format
+## Notes
 
-When providing search results or gathered information:
-
-1. **Summary**: Brief overview of findings
-2. **Sources**: List of sources with reliability indicators
-3. **Key Information**: Main points from each source
-4. **Synthesis**: Combined understanding from all sources
-5. **Gaps/Uncertainties**: Areas needing further research
-6. **Recommendations**: Suggested next steps or additional searches
-
----
-
-## Example Workflows
-
-### Example 1: Current Technology Research
-**User Request**: "Find current information about quantum computing advancements in 2024"
-
-**Search Strategy:**
-1. Start with broad search: "quantum computing 2024"
-2. Narrow to specific aspects: "quantum supremacy 2024", "quantum error correction recent"
-3. Search academic sources: `site:arxiv.org quantum computing 2024`
-4. Check industry news: "IBM quantum 2024", "Google quantum 2024"
-
-**Source Evaluation:**
-- Prioritize peer-reviewed papers and official company announcements
-- Cross-reference claims across multiple sources
-- Check dates to ensure information is current
-
-### Example 2: Fact Verification
-**User Request**: "Verify claims about climate change impacts"
-
-**Verification Process:**
-1. Find original source of claims
-2. Search scientific databases for supporting/contradicting evidence
-3. Check consensus among climate scientists
-4. Review reports from IPCC and other authoritative bodies
-5. Compare with historical data and trends
-
-### Example 3: Market Research
-**User Request**: "Gather information about electric vehicle market trends"
-
-**Research Approach:**
-1. Industry reports from consulting firms
-2. Government energy department statistics
-3. Company financial reports and announcements
-4. Academic research on EV technology
-5. News coverage of major developments
-
----
-
-**Remember**: The goal of web searching is not just to find information, but to find *reliable* information that helps answer questions and solve problems effectively.
+- DuckDuckGo is privacy-focused and doesn't track searches
+- Results may vary based on region (default: us-en)
+- Some queries trigger instant answers (concise summaries)
+- Always verify critical information from multiple sources

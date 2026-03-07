@@ -134,7 +134,7 @@ class SkillLoader:
             content,
             re.DOTALL
         )
-        body = body_match.group(1).strip() if body_match else ""
+        body = body_match.group(2).strip() if body_match else ""
         
         return SkillContent(
             metadata=metadata,
