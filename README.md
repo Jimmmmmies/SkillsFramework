@@ -114,6 +114,40 @@ Skills are **instruction packs** living under `skills/<skill>/SKILL.md` with YAM
 4. `load_skill` reads the full `SKILL.md` content and returns it to the agent.
 5. The agent follows the skill instructions (may include running scripts under `skills/<skill>/scripts/`).
 
+## MCP Support
+
+SkillsFramework supports mounting remote MCP servers as local callable tools via `MCPServer` + `ToolRegistry`.
+
+- **Supported transports**: `stdio`, `sse`, `streamable_http`
+- **Mount API**: `await registry.mount_mcp_servers(...)`
+- **Tool naming**: `<server_name>__<remote_tool_name>` (for example, `weather__forecast`)
+- **Lifecycle**: call `await registry.close_mcp_sessions()` on shutdown to close MCP sessions cleanly
+
+**Minimal example**:
+
+```python
+from app.tools import MCPServer, MCPTransport
+from app.tools.registry import ToolRegistry
+
+registry = ToolRegistry()
+
+server = MCPServer(
+    name="weather",
+    transport=MCPTransport.STDIO,
+    command="python",
+    args=["Servers/Getweather.py"],
+)
+
+await registry.mount_mcp_servers(server)
+result = await registry.execute_tool("weather__forecast", {"city": "beijing"})
+await registry.close_mcp_sessions()
+```
+
+**Transport requirements**:
+
+- `stdio` requires `command`
+- `sse` and `streamable_http` require `url`
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).

@@ -78,6 +78,40 @@ skills/
 
 `SkillLoader` 会扫描技能目录并将技能元信息注入系统提示词，使 Agent 在需要时调用 `load_skill`。
 
+## MCP 支持
+
+SkillsFramework 支持通过 `MCPServer` + `ToolRegistry` 将远程 MCP Server 挂载为本地可调用工具。
+
+- **支持传输方式**：`stdio`、`sse`、`streamable_http`
+- **挂载接口**：`await registry.mount_mcp_servers(...)`
+- **工具命名规则**：`<server_name>__<remote_tool_name>`（例如 `weather__forecast`）
+- **会话生命周期**：在结束时调用 `await registry.close_mcp_sessions()`，以便优雅关闭 MCP 会话
+
+**最小示例**：
+
+```python
+from app.tools import MCPServer, MCPTransport
+from app.tools.registry import ToolRegistry
+
+registry = ToolRegistry()
+
+server = MCPServer(
+    name="weather",
+    transport=MCPTransport.STDIO,
+    command="python",
+    args=["Servers/Getweather.py"],
+)
+
+await registry.mount_mcp_servers(server)
+result = await registry.execute_tool("weather__forecast", {"city": "beijing"})
+await registry.close_mcp_sessions()
+```
+
+**传输参数要求**：
+
+- `stdio` 必须提供 `command`
+- `sse` 与 `streamable_http` 必须提供 `url`
+
 ## 许可证
 
 MIT 许可。详见 [LICENSE](LICENSE)。

@@ -1,18 +1,47 @@
 import inspect
-from typing import Any, List, Optional
+import asyncio
+from typing import TYPE_CHECKING, Any, List, Optional
 from app.tools.base import BaseTool, ToolResult
 from app.exceptions import ToolException
 from app.logger import logger
 from app.context import ToolContext
 
+if TYPE_CHECKING:
+    from app.tools.mcp import MCPServer
+
+
 class ToolRegistry:
     """
     Registry for managing available tools.
     """
+
     def __init__(self, *tools: BaseTool, tool_context: Optional[ToolContext] = None):
         self.tools = list(tools)
         self.tool_map = {tool.name: tool for tool in self.tools}
         self.tool_context = tool_context
+        self._mcp_servers: list["MCPServer"] = []
+
+    async def mount_mcp_servers(self, *servers: "MCPServer") -> "ToolRegistry":
+        from app.tools.mcp import MCPServer
+
+        for server in servers:
+            if not isinstance(server, MCPServer):
+                raise TypeError(f"Expected MCPServer, got {type(server).__name__}")
+
+            mounted_tools = await server.build_tools()
+            self.add_tools(*mounted_tools)
+            if server not in self._mcp_servers:
+                self._mcp_servers.append(server)
+
+        return self
+
+    async def close_mcp_sessions(self) -> "ToolRegistry":
+        for server in self._mcp_servers:
+            try:
+                await asyncio.shield(server.close_session())
+            except Exception as e:
+                logger.warning(f"⚠️Failed to close MCP server '{server.name}': {e}")
+        return self
 
     def __iter__(self):
         """
@@ -26,7 +55,7 @@ class ToolRegistry:
         """
         return [tool.to_openai_schema() for tool in self.tools]
 
-    def get_tool(self, name: str) -> BaseTool:
+    def get_tool(self, name: str) -> Optional[BaseTool]:
         """
         Retrieve a tool by its name.
         """
@@ -90,7 +119,11 @@ class ToolRegistry:
             return ToolResult(error=f"Tool '{name}' is not valid.")
         try:
             final_input = tool_input.copy() if tool_input else {}
-            signature = inspect.signature(tool.func)
+            target = getattr(tool, "func", None)
+            if target is None:
+                target = tool.execute
+
+            signature = inspect.signature(target)
 
             if "context" in signature.parameters:
                 if "context" not in final_input:
