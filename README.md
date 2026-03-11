@@ -126,14 +126,14 @@ SkillsFramework supports mounting remote MCP servers as local callable tools via
 **Minimal example**:
 
 ```python
-from app.tools import MCPServer, MCPTransport
+from app.tools import MCPServer
 from app.tools.registry import ToolRegistry
 
 registry = ToolRegistry()
 
 server = MCPServer(
     name="weather",
-    transport=MCPTransport.STDIO,
+    transport="stdio",
     command="python",
     args=["Servers/Getweather.py"],
 )
