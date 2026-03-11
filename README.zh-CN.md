@@ -8,6 +8,7 @@ SkillsFramework 是一个轻量级 Agent 框架，支持 **工具调用** 与 **
 
 - **Agent 继承体系**：`BaseAgent` → `ReActAgent` → `ToolCallAgent` → `SkillsAgent`
 - **工具系统**：将函数封装为 Tool，自动生成 OpenAI 工具调用 schema
+- **MCP 集成**：支持将远程 MCP Server（`stdio` / `sse` / `streamable_http`）挂载为本地可调用工具
 - **技能加载器**：从 `skills/<skill>/SKILL.md` 读取技能并注入提示词
 - **LLM 客户端**：OpenAI 兼容异步客户端，自动识别 provider，带重试机制
 - **结构化记忆**：统一消息/角色 schema
@@ -24,6 +25,7 @@ app/
     skills.py       # SkillsAgent：工具调用 + 技能注入
   tools/
     base.py         # tool 装饰器/ToolResult/schema 生成
+    mcp.py          # MCP 传输/服务封装与远程工具挂载
     registry.py     # ToolRegistry 执行与 schema
     skillloader.py  # SkillLoader 读取 SKILL.md
     builtin/        # 内置工具（bash/load_skill/ask_human/file_edit...）

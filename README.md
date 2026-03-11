@@ -8,6 +8,7 @@ SkillsFramework is a lightweight agent framework that supports tool calling and 
 
 - **Agent hierarchy**: `BaseAgent` → `ReActAgent` → `ToolCallAgent` → `SkillsAgent`
 - **Tool system**: wrap Python functions as tools with auto-generated schemas
+- **MCP integration**: mount remote MCP servers (`stdio` / `sse` / `streamable_http`) as local callable tools
 - **Skill loader**: load skills from `skills/<skill>/SKILL.md` and inject metadata into prompts
 - **LLM client**: OpenAI-compatible async client with provider auto-detection and retry
 - **Structured memory**: message history with role-aware schema
@@ -24,6 +25,7 @@ app/
     skills.py       # SkillsAgent: tool calling + skill injection
   tools/
     base.py         # tool decorator, ToolResult, schema generation
+    mcp.py          # MCP transport/server wrappers and remote tool mounting
     registry.py     # ToolRegistry execution & schema
     skillloader.py  # SkillLoader for SKILL.md
     builtin/        # built-in tools (bash, load_skill, ask_human, file_edit...)
