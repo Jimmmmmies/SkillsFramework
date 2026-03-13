@@ -7,26 +7,32 @@ from app.logger import logger
 from app.context import ToolContext
 
 if TYPE_CHECKING:
-    from app.tools.mcp import MCPServer
-
+    from app.tools.mcp import MCPServer, MultiMCPServer
 
 class ToolRegistry:
     """
     Registry for managing available tools.
     """
-
     def __init__(self, *tools: BaseTool, tool_context: Optional[ToolContext] = None):
         self.tools = list(tools)
         self.tool_map = {tool.name: tool for tool in self.tools}
         self.tool_context = tool_context
         self._mcp_servers: list["MCPServer"] = []
 
-    async def mount_mcp_servers(self, *servers: "MCPServer") -> "ToolRegistry":
-        from app.tools.mcp import MCPServer
+    async def mount_mcp_servers(
+        self, *servers: "MCPServer | MultiMCPServer"
+    ) -> "ToolRegistry":
+        from app.tools.mcp import MCPServer, MultiMCPServer
 
         for server in servers:
+            if isinstance(server, MultiMCPServer):
+                await self.mount_mcp_servers(*server.to_servers())
+                continue
+
             if not isinstance(server, MCPServer):
-                raise TypeError(f"Expected MCPServer, got {type(server).__name__}")
+                raise TypeError(
+                    f"Expected MCPServer or MultiMCPServer, got {type(server).__name__}"
+                )
 
             mounted_tools = await server.build_tools()
             self.add_tools(*mounted_tools)

@@ -80,32 +80,75 @@ skills/
 
 `SkillLoader` 会扫描技能目录并将技能元信息注入系统提示词，使 Agent 在需要时调用 `load_skill`。
 
+## 工具系统
+
+工具通过**基于装饰器的注解方式**进行注册。装饰器会解析函数签名与文档字符串，自动生成 OpenAI 工具 schema，因此开发者只需要声明函数及其参数。
+
+**示例：使用注解注册工具（无需实现具体逻辑）**
+
+```python
+from app.tools.base import tool
+
+@tool
+async def search_docs(query: str, top_k: int = 5) -> dict:
+    """
+    搜索内部文档并返回匹配结果。
+
+    Args:
+        query: 搜索关键词。
+        top_k: 返回结果的最大数量。
+
+    Returns:
+        包含匹配条目的字典。
+    """
+    ...
+```
+
+随后将该工具加入 `ToolRegistry`（或加入 Agent 的可用工具列表），Agent 才能调用该工具。
+
+## 技能系统逻辑
+
+技能是位于 `skills/<skill>/SKILL.md` 下、包含 YAML frontmatter 的**指令包**。运行时流程如下：
+
+1. `SkillLoader` 扫描技能目录并解析 `SKILL.md` 的 frontmatter（name、description、path）。
+2. Agent 的系统提示词会被**增强**：注入可用技能列表与简短使用说明。
+3. 当用户请求与某个技能匹配时，Agent 会调用 `load_skill` 工具。
+4. `load_skill` 会读取完整 `SKILL.md` 内容并返回给 Agent。
+5. Agent 按照技能说明执行（可能包含运行 `skills/<skill>/scripts/` 下的脚本）。
+
 ## MCP 支持
 
-SkillsFramework 支持通过 `MCPServer` + `ToolRegistry` 将远程 MCP Server 挂载为本地可调用工具。
+SkillsFramework 支持通过 `MultiMCPServer` + `ToolRegistry` 一次性挂载多个远程 MCP Server，并统一暴露为本地可调用工具。
 
 - **支持传输方式**：`stdio`、`sse`、`streamable_http`
-- **挂载接口**：`await registry.mount_mcp_servers(...)`
+- **配置输入**：支持 `dict` / `list` / JSON 字符串（由 `MultiMCPServer` 自动归一化）
+- **挂载接口**：`await registry.mount_mcp_servers(multi)`
 - **工具命名规则**：`<server_name>__<remote_tool_name>`（例如 `weather__forecast`）
 - **会话生命周期**：在结束时调用 `await registry.close_mcp_sessions()`，以便优雅关闭 MCP 会话
 
 **最小示例**：
 
 ```python
-from app.tools import MCPServer
+from app.tools import MultiMCPServer
 from app.tools.registry import ToolRegistry
 
 registry = ToolRegistry()
 
-server = MCPServer(
-    name="weather",
-    transport="stdio",
-    command="python",
-    args=["Servers/Getweather.py"],
+multi = MultiMCPServer(
+    {
+        "leetcode": {
+            "transport": "stdio",
+            "command": "npx",
+            "args": ["-y", "@jinzcdev/leetcode-mcp-server", "--site", "cn"],
+        },
+        "opgg-mcp": {
+            "transport": "streamable_http",
+            "url": "https://mcp-api.op.gg/mcp",
+        },
+    }
 )
 
-await registry.mount_mcp_servers(server)
-result = await registry.execute_tool("weather__forecast", {"city": "beijing"})
+await registry.mount_mcp_servers(multi)
 await registry.close_mcp_sessions()
 ```
 

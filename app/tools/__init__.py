@@ -1,5 +1,5 @@
 from app.tools.base import BaseTool, FunctionTool
-from app.tools.mcp import MCPRemoteTool, MCPServer, MCPTransport
+from app.tools.mcp import MCPRemoteTool, MCPServer, MCPTransport, MultiMCPServer
 
 __all__ = [
     "BaseTool",
@@ -7,4 +7,5 @@ __all__ = [
     "MCPTransport",
     "MCPServer",
     "MCPRemoteTool",
+    "MultiMCPServer",
 ]

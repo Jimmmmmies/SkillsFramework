@@ -2,12 +2,26 @@ import asyncio
 
 from app.llm import LLM
 from app.agents.toolcall import ToolCallAgent
-from app.tools import MCPServer
+from app.tools import MultiMCPServer
 from app.tools.builtin import (
     file_edit,
     getweather,
     ask_human,
     bash,
+)
+
+client = MultiMCPServer(
+    {
+        "leetcode": {
+            "transport": "stdio",
+            "command": "npx",
+            "args": ["-y", "@jinzcdev/leetcode-mcp-server", "--site", "cn"],
+        },
+        "opgg-mcp": {
+            "transport": "streamable_http",
+            "url": "https://mcp-api.op.gg/mcp",
+        },
+    }
 )
 
 async def ainput(prompt: str = "") -> str:
@@ -17,19 +31,7 @@ async def ainput(prompt: str = "") -> str:
 async def chat_loop() -> None:
     agent = ToolCallAgent(llm=LLM(model="deepseek-chat"))
     try:
-        await agent.available_tools.mount_mcp_servers(
-            MCPServer(
-                name="leetcode",
-                transport="stdio",
-                command="npx",
-                args=["-y", "@jinzcdev/leetcode-mcp-server", "--site", "cn"],
-            ),
-            MCPServer(
-                name="opgg-mcp",
-                transport="streamable_http",
-                url="https://mcp-api.op.gg/mcp",
-            ),
-        )
+        await agent.available_tools.mount_mcp_servers(client)
         agent.available_tools.add_tools(
             file_edit,
             getweather,

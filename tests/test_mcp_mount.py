@@ -3,7 +3,7 @@ from contextlib import AsyncExitStack
 
 from app.context import ToolContext
 from app.tools.base import BaseTool, ToolResult
-from app.tools.mcp import MCPServer, MCPTransport
+from app.tools.mcp import MCPServer, MCPTransport, MultiMCPServer
 from app.tools.registry import ToolRegistry
 
 
@@ -117,6 +117,35 @@ class MCPMountTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(server.opens, 1)
 
         await registry.close_mcp_sessions()
+
+    async def test_multi_mcp_server_from_dict_mounts_all(self):
+        config = {
+            "weather": {
+                "transport": "stdio",
+                "command": "python",
+                "args": ["Servers/Getweather.py"],
+            },
+            "search": {
+                "name": "search",
+                "transport": "stdio",
+                "command": "python",
+                "args": ["Servers/Search.py"],
+            },
+        }
+        multi = MultiMCPServer(config)
+
+        names = [srv.name for srv in multi.to_servers()]
+        self.assertEqual(names, ["weather", "search"])
+        self.assertEqual(multi.to_servers()[0].transport, MCPTransport.STDIO)
+
+    async def test_multi_mcp_server_from_json_string(self):
+        config_json = '{"leetcode":{"transport":"stdio","command":"npx","args":["-y","@jinzcdev/leetcode-mcp-server","--site","cn"]}}'
+        multi = MultiMCPServer(config_json)
+        servers = multi.to_servers()
+
+        self.assertEqual(len(servers), 1)
+        self.assertEqual(servers[0].name, "leetcode")
+        self.assertEqual(servers[0].transport, MCPTransport.STDIO)
 
 
 if __name__ == "__main__":

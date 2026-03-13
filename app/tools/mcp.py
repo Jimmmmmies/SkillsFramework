@@ -3,9 +3,12 @@ import asyncio
 from importlib import import_module
 from contextlib import AsyncExitStack
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from app.tools.base import BaseTool, ToolResult
+
+if TYPE_CHECKING:
+    from app.tools.registry import ToolRegistry
 
 
 class MCPTransport(str, Enum):
@@ -285,6 +288,68 @@ class MCPServer(BaseModel):
 
         return str(result)
 
+
+class MultiMCPServer(BaseModel):
+    servers: list[MCPServer] = Field(default_factory=list)
+
+    def __init__(self, config: Any = None, **data: Any):
+        if config is not None and not data:
+            normalized = self._normalize_config(config)
+            super().__init__(**normalized)
+            return
+        super().__init__(**data)
+
+    @staticmethod
+    def _normalize_config(data: Any) -> dict[str, Any]:
+        payload = data
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON config: {e}") from e
+
+        if isinstance(payload, MultiMCPServer):
+            return {"servers": payload.servers}
+
+        if isinstance(payload, dict) and "servers" in payload:
+            return payload
+
+        servers: list[MCPServer] = []
+        if isinstance(payload, dict):
+            for name, server_cfg in payload.items():
+                if not isinstance(server_cfg, dict):
+                    raise TypeError(
+                        f"Config for server '{name}' must be an object, got {type(server_cfg).__name__}"
+                    )
+                item = dict(server_cfg)
+                item.setdefault("name", name)
+                servers.append(MCPServer(**item))
+            return {"servers": servers}
+
+        if isinstance(payload, list):
+            for idx, server_cfg in enumerate(payload):
+                if not isinstance(server_cfg, dict):
+                    raise TypeError(
+                        f"Server config at index {idx} must be an object, got {type(server_cfg).__name__}"
+                    )
+                if "name" not in server_cfg:
+                    raise ValueError(
+                        f"Server config at index {idx} must include 'name'"
+                    )
+                servers.append(MCPServer(**server_cfg))
+            return {"servers": servers}
+
+        raise TypeError(
+            f"Config must be dict/list/JSON string, got {type(payload).__name__}"
+        )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_input(cls, data: Any) -> dict[str, Any]:
+        return cls._normalize_config(data)
+
+    def to_servers(self) -> list[MCPServer]:
+        return list(self.servers)
 
 class MCPRemoteTool(BaseTool):
     server: MCPServer

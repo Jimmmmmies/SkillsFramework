@@ -118,30 +118,37 @@ Skills are **instruction packs** living under `skills/<skill>/SKILL.md` with YAM
 
 ## MCP Support
 
-SkillsFramework supports mounting remote MCP servers as local callable tools via `MCPServer` + `ToolRegistry`.
+SkillsFramework supports mounting multiple remote MCP servers as local callable tools via `MultiMCPServer` + `ToolRegistry`.
 
 - **Supported transports**: `stdio`, `sse`, `streamable_http`
-- **Mount API**: `await registry.mount_mcp_servers(...)`
+- **Config input**: `dict` / `list` / JSON string (normalized by `MultiMCPServer`)
+- **Mount API**: `await registry.mount_mcp_servers(multi)`
 - **Tool naming**: `<server_name>__<remote_tool_name>` (for example, `weather__forecast`)
 - **Lifecycle**: call `await registry.close_mcp_sessions()` on shutdown to close MCP sessions cleanly
 
 **Minimal example**:
 
 ```python
-from app.tools import MCPServer
+from app.tools import MultiMCPServer
 from app.tools.registry import ToolRegistry
 
 registry = ToolRegistry()
 
-server = MCPServer(
-    name="weather",
-    transport="stdio",
-    command="python",
-    args=["Servers/Getweather.py"],
+multi = MultiMCPServer(
+    {
+        "leetcode": {
+            "transport": "stdio",
+            "command": "npx",
+            "args": ["-y", "@jinzcdev/leetcode-mcp-server", "--site", "cn"],
+        },
+        "opgg-mcp": {
+            "transport": "streamable_http",
+            "url": "https://mcp-api.op.gg/mcp",
+        },
+    }
 )
 
-await registry.mount_mcp_servers(server)
-result = await registry.execute_tool("weather__forecast", {"city": "beijing"})
+await registry.mount_mcp_servers(multi)
 await registry.close_mcp_sessions()
 ```
 
